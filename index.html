@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1E2830">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burring Feasibility Calculator v1.5</title>
+<style>
+:root{
+  --ink:#1E2830; --ink2:#55636E; --ink3:#8A96A0;
+  --steel:#E6EAED; --panel:#FFFFFF; --line:#C9D1D7;
+  --metal:#B9C3CB; --metal-edge:#4A5863; --flange:#E9A23B; --flange-edge:#8A5A12;
+  --dim:#1F6FB2;
+  --ok:#2E7D4F; --ok-bg:#E3F2E8; --warn:#A86A00; --warn-bg:#FBF0D9; --ng:#B3261E; --ng-bg:#F9E1DF;
+  --num:"Bahnschrift","DIN Alternate","Segoe UI",sans-serif;
+  --body:"Segoe UI","Malgun Gothic",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--steel);color:var(--ink);font:14px/1.5 var(--body)}
+header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding:18px 28px 14px;border-bottom:3px solid var(--ink);background:var(--panel)}
+header h1{margin:0;font:600 22px/1.2 var(--num);letter-spacing:.2px}
+header .sub{color:var(--ink2);font-size:13px}
+header button{margin-left:auto}
+main{display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px 28px 40px;max-width:1400px}
+@media (max-width:900px){main{grid-template-columns:1fr;padding:16px}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+h2{margin:0 0 12px;font:600 15px/1.3 var(--num);color:var(--ink)}
+.group{margin-bottom:18px}
+.group:last-child{margin-bottom:0}
+.gtitle{font:600 13px var(--num);color:var(--ink2);border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:10px}
+.row{display:grid;grid-template-columns:1fr 112px;align-items:center;gap:8px;margin-bottom:8px}
+.row label{font-size:13px}
+.row label b{font:600 13px var(--num)}
+.row label small{display:block;color:var(--ink3);font-size:11.5px;line-height:1.3}
+input,select{width:100%;font:15px var(--num);padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:#FBFCFD;color:var(--ink)}
+select{font:13px var(--body)}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--dim);outline-offset:1px}
+input[readonly]{background:var(--steel);color:var(--ink2)}
+.full{grid-column:1/-1}
+.row.stack{grid-template-columns:1fr}
+.rrec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);background:var(--steel);border-radius:4px;padding:7px 10px}
+.rrec b{font:600 14px var(--num);color:var(--ink)}
+.rrec button{padding:3px 10px;font-size:12px;margin-left:auto}
+.tag{font:600 11px var(--body);padding:1px 7px;border-radius:9px;background:var(--ok-bg);color:var(--ok)}
+.tag.man{background:var(--warn-bg);color:var(--warn)}
+details.adv summary{cursor:pointer;font:600 13px var(--num);color:var(--ink2);border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:10px}
+.key{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media (max-width:640px){.key{grid-template-columns:1fr}}
+.kcard{border:1px solid var(--line);border-top:4px solid var(--ink);border-radius:5px;padding:12px 14px}
+.kcard .k{font-size:13px;color:var(--ink2)}
+.kcard .v{font:600 34px/1.15 var(--num);color:var(--ink)}
+.kcard .v small{font-size:15px;color:var(--ink3);margin-left:4px}
+.kcard .m{font-size:12.5px;color:var(--ink2)}
+button{font:600 13px var(--body);padding:7px 14px;border:1px solid var(--ink);background:var(--panel);color:var(--ink);border-radius:4px;cursor:pointer}
+button:hover{background:var(--ink);color:#fff}
+.right{display:flex;flex-direction:column;gap:20px;min-width:0}
+#drawing svg{width:100%;height:auto;display:block}
+.verdict{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+@media (max-width:640px){.verdict{grid-template-columns:1fr}}
+.vcard{border-radius:5px;padding:10px 12px;border-left:5px solid}
+.vcard .k{font-size:12px;color:var(--ink2)}
+.vcard .v{font:600 20px var(--num)}
+.vcard .m{font-size:12px}
+.s-ok{background:var(--ok-bg);border-color:var(--ok)} .s-ok .v{color:var(--ok)}
+.s-warn{background:var(--warn-bg);border-color:var(--warn)} .s-warn .v{color:var(--warn)}
+.s-ng{background:var(--ng-bg);border-color:var(--ng)} .s-ng .v{color:var(--ng)}
+.s-na{background:var(--steel);border-color:var(--ink3)} .s-na .v{color:var(--ink2)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font:600 12px var(--num);color:var(--ink2)}
+td.n{font:600 15px var(--num);text-align:right;white-space:nowrap}
+td.u{color:var(--ink3);width:40px}
+td.f{color:var(--ink2);font-size:12px}
+.msgs{margin:12px 0 0;padding:0;list-style:none}
+.msgs li{padding:6px 10px;margin-top:6px;border-radius:4px;font-size:13px}
+.msgs li.w{background:var(--warn-bg);color:#6B4400}
+.msgs li.e{background:var(--ng-bg);color:#7A1A14}
+.msgs li.i{background:var(--steel);color:var(--ink2)}
+.chartwrap{position:relative;width:100%;height:280px}
+canvas{width:100%;height:100%;display:block}
+details summary{cursor:pointer;font:600 15px var(--num)}
+.ref{font-size:13px;color:var(--ink2)}
+.ref code{font:14px var(--num);color:var(--ink);background:var(--steel);padding:2px 6px;border-radius:3px;display:inline-block;margin:2px 0}
+.ref p{margin:8px 0}
+.note{font-size:12px;color:var(--ink3);margin-top:8px}
+@media print{header button,.noprint{display:none} body{background:#fff} main{display:block} section{break-inside:avoid;margin-bottom:12px}}
+.linkbtn{padding:4px 10px;font-size:12px;margin:-2px 0 4px}
+dialog{border:1px solid var(--ink);border-radius:6px;padding:0;width:min(920px,96vw);max-height:90vh;color:var(--ink)}
+dialog::backdrop{background:rgba(30,40,48,.45)}
+.dhead{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:2px solid var(--ink)}
+.dhead h2{margin:0}
+.dbody{padding:12px 18px;overflow:auto;max-height:calc(90vh - 130px)}
+.dfoot{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--steel)}
+.dfoot .sp{flex:1}
+.mt td{padding:4px 4px;border-bottom:1px solid var(--line)}
+.mt th{padding:6px 4px}
+.mt input{font-size:13px;padding:5px 6px}
+.mt td.ac{white-space:nowrap}
+.mt{min-width:560px}
+.mt input[type=number]{min-width:72px}
+@media (max-width:640px){.dbody{overflow-x:auto}.dfoot button{flex:1 1 auto}.dfoot .sp{display:none}}
+.mt td.ac button{padding:3px 7px;font-size:12px;margin-left:2px}
+.mt tr.bad input.err{border-color:var(--ng);background:var(--ng-bg)}
+.dmsg{font-size:12.5px;margin-top:8px;color:var(--ink2)}
+.dmsg.e{color:var(--ng)}
+button.pri{background:var(--ink);color:#fff}
+button.pri:hover{background:#000}
+</style>
+</head>
+<body>
+<header>
+  <h1>Burring Feasibility Calculator</h1>
+  <span class="sub">Hole flanging · pierce hole size, hole expansion ratio and land width check · v1.5</span>
+  <button onclick="window.print()">Print report</button>
+</header>
+
+<main>
+<section aria-label="Inputs">
+  <div class="group">
+    <div class="gtitle">Design inputs (mm)</div>
+    <div class="row"><label for="t"><b>t</b> Sheet thickness</label><input id="t" type="number" step="0.1" min="0.1" value="2.0"></div>
+    <div class="row"><label for="D1"><b>ØD1</b> Burring inner diameter<small>= punch diameter</small></label><input id="D1" type="number" step="0.1" min="0.1" value="20.0"></div>
+    <div class="row"><label for="h"><b>h</b> Burring height<small>bottom surface to flange tip</small></label><input id="h" type="number" step="0.1" min="0" value="4.0"></div>
+    <div class="row"><label for="f"><b>f</b> Available land width<small>inner wall to part edge / next feature</small></label><input id="f" type="number" step="0.1" min="0" value="15.0"></div>
+    <div class="row stack"><label for="mat"><b>Material grade</b></label><select id="mat"></select></div>
+    <button class="noprint linkbtn" onclick="openEditor()">Edit material list…</button>
+  </div>
+
+  <div class="group">
+    <div class="gtitle">Die corner radius (mm)</div>
+    <div class="row"><label for="r"><b>r</b> Die corner radius<small id="rhint">default 0.5·t applied</small></label><input id="r" type="number" step="0.05" min="0" value="1.0"></div>
+    <div class="rrec" id="rrec"></div>
+  </div>
+
+  <details class="group adv">
+    <summary>Advanced settings</summary>
+    <div class="row"><label for="lamBase"><b>λ<sub>base</sub></b> HER, punched hole (%)<small>edit to use mill data</small></label><input id="lamBase" type="number" step="1" min="1"></div>
+    <div class="row stack"><label for="method">Hole preparation</label><select id="method"></select></div>
+    <div class="row"><label for="mf">Preparation factor</label><input id="mf" type="number" step="0.05" min="0.1"></div>
+    <div class="row"><label for="lamLim"><b>λ<sub>lim</sub></b> Effective limit (%)</label><input id="lamLim" type="number" readonly></div>
+    <div class="row stack"><label for="basis">Strain basis</label>
+      <select id="basis">
+        <option value="D1">Inner dia. D1 (HER test basis)</option>
+        <option value="Dm">Mean dia. D1 + t (conservative)</option>
+      </select></div>
+    <div class="row"><label for="sf">Safety factor<small>λ<sub>allow</sub> = λ<sub>lim</sub> × SF</small></label><input id="sf" type="number" step="0.05" min="0.1" max="1" value="0.85"></div>
+    <div class="row"><label for="brt">Bend limit R/t (reference)<small>90° bend, from mill spec</small></label><input id="brt" type="number" step="0.1" min="0"></div>
+    <div class="row"><label for="kf">Land margin k<small>f<sub>min</sub> = t + r + k·t</small></label><input id="kf" type="number" step="0.1" min="0" value="2.0"></div>
+  </details>
+  <button class="noprint" onclick="resetAll()">Reset to defaults</button>
+</section>
+
+<div class="right">
+  <section>
+    <h2>Cross-section (to scale)</h2>
+    <div id="drawing"></div>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+    <div class="key" id="key"></div>
+    <div class="verdict" id="verdict"></div>
+    <table>
+      <thead><tr><th>Item</th><th style="text-align:right">Value</th><th></th><th>Formula</th></tr></thead>
+      <tbody id="res"></tbody>
+    </table>
+    <ul class="msgs" id="msgs"></ul>
+  </section>
+
+  <section>
+    <h2>Required hole expansion vs burring height</h2>
+    <div class="chartwrap"><canvas id="chart" aria-label="Chart of required hole expansion ratio versus burring height"></canvas></div>
+    <div class="note">Blue curve: required λ for each height at the current t, D1 and r. The dot is the current design; dashed lines are λ<sub>lim</sub> and λ<sub>allow</sub>.</div>
+  </section>
+
+  <section>
+    <details>
+      <summary>Formula reference</summary>
+      <div class="ref">
+        <p>Pierce hole diameter, from neutral-line length constancy (Romanovsky form with H = h + t):<br><code>d = D1 − 2h + 0.86·r + 0.43·t</code></p>
+        <p>Height from a given hole:<br><code>h = (D1 − d)/2 + 0.43·r + 0.215·t</code></p>
+        <p>Required hole expansion ratio:<br><code>λ_req = (D_basis − d) / d × 100 %</code> &nbsp; D_basis = D1 or D1 + t</p>
+        <p>Flanging coefficient: <code>K = d / D1</code> (smaller K = more severe)</p>
+        <p>Edge thickness after forming: <code>t1 ≈ t · √(d / D1)</code></p>
+        <p>Maximum height at the allowable limit:<br><code>d_min = D_basis / (1 + λ_allow/100)</code> &nbsp; <code>h_max = (D1 − d_min)/2 + 0.43·r + 0.215·t</code></p>
+        <p>Root bend strain (outer fibre): <code>ε ≈ 1 / (2r/t + 1)</code> &nbsp; compared with the material's minimum bend R/t. Default die corner radius is r = 0.5·t (field standard); a smaller r lengthens the straight wall but raises λ_req and root strain.</p>
+        <p>Minimum land width: <code>f_min = t + r + k·t</code> (k = 1.5 to 2.0 typical)</p>
+        <p>Reference die opening: <code>D_die ≈ D1 + 2t</code></p>
+        <p>The length method ignores wall thinning, so actual height usually comes out slightly higher than calculated. Use the result as a starting value and correct the pierce hole after try-out. HER values in the material list are typical figures for punched holes; replace them with mill data (ISO 16630) when available.</p>
+      </div>
+    </details>
+  </section>
+</div>
+</main>
+
+<script>
+const BUILTIN = [
+  {n:"SPCC / SPCD (cold rolled mild steel)", l:100, br:0.0},
+  {n:"SPCE / SPCEN (deep drawing quality)", l:120, br:0.0},
+  {n:"SPHC (hot rolled mild steel)", l:90, br:0.0},
+  {n:"SAPH440 / SPFH440", l:70, br:0.5},
+  {n:"SPFH590 (conventional)", l:60, br:1.0},
+  {n:"FB590 (ferrite-bainite, burring grade)", l:85, br:0.5},
+  {n:"FB780 (ferrite-bainite, burring grade)", l:55, br:1.0},
+  {n:"POSCO PDT78HB (780HB hyper burring, HER spec min.)", l:55, br:0.5},
+  {n:"DP590", l:45, br:1.0},
+  {n:"DP780", l:30, br:1.5},
+  {n:"DP980", l:20, br:2.0},
+  {n:"STS304 (austenitic stainless)", l:65, br:0.5}
+];
+const CUSTOM = {n:"Custom (enter λ base in advanced settings)", l:null, br:0.5};
+const STORE_KEY = "burringCalc.materials.v1";
+let storageOk = true;
+function loadMats(){
+  try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const a=JSON.parse(raw); if(Array.isArray(a)&&a.length) return a.filter(validMat); } }
+  catch(e){ storageOk=false; }
+  return BUILTIN.map(m=>({...m}));
+}
+function saveMats(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(MATERIALS)); storageOk=true; return true; } catch(e){ storageOk=false; return false; } }
+function validMat(m){ return m && typeof m.n==="string" && m.n.trim() && isFinite(m.l) && m.l>0 && isFinite(m.br) && m.br>=0; }
+let MATERIALS = loadMats();
+const MATS = () => [...MATERIALS, CUSTOM];
+function rebuildSelect(keepName){
+  const sel=$("mat"); sel.innerHTML="";
+  MATS().forEach((m,i)=>sel.add(new Option(m.n + (m.l?`  (≈${m.l}%)`:""), i)));
+  const idx = keepName ? MATS().findIndex(m=>m.n===keepName) : -1;
+  sel.value = idx>=0 ? idx : 0;
+}
+const METHODS = [
+  {n:"Punched, burr on punch side", k:1.00},
+  {n:"Punched, burr on die side", k:0.80},
+  {n:"Laser / wire cut", k:1.20},
+  {n:"Drilled and reamed", k:1.60},
+  {n:"Custom factor", k:null}
+];
+const DEF = {t:2.0,D1:20.0,h:4.0,f:15.0,mat:0,method:0,basis:"D1",sf:0.85,kf:2.0};
+const $ = id => document.getElementById(id);
+let rAuto = true;
+
+rebuildSelect();
+METHODS.forEach((m,i)=>$("method").add(new Option(m.n + (m.k?`  (×${m.k.toFixed(2)})`:""), i)));
+
+function useRec(){rAuto=true; calc();}
+function applyMat(){const m=MATS()[+$("mat").value]; $("brt").value=m.br.toFixed(1); if(m.l!==null) $("lamBase").value=m.l; $("lamBase").readOnly = m.l!==null; if(m.l===null) $("lamBase").closest("details").open=true;}
+function applyMethod(){const m=METHODS[+$("method").value]; if(m.k!==null) $("mf").value=m.k.toFixed(2); $("mf").readOnly = m.k!==null;}
+$("r").addEventListener("input",()=>{rAuto=false;});
+$("mat").addEventListener("change",()=>{applyMat();calc();});
+$("method").addEventListener("change",()=>{applyMethod();calc();});
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",calc));
+
+function resetAll(){
+  ["t","D1","h","f","sf","kf"].forEach(k=>$(k).value=DEF[k]);
+  $("mat").value=DEF.mat; $("method").value=DEF.method; $("basis").value=DEF.basis;
+  rAuto=true; applyMat(); applyMethod(); calc();
+}
+
+const num = id => parseFloat($(id).value);
+const fx = (v,d=2) => (isFinite(v)? v.toFixed(d) : "–");
+
+function dOf(D1,h,r,t){return D1 - 2*h + 0.86*r + 0.43*t;}
+function lamOf(Db,d){return d>0 ? (Db-d)/d*100 : Infinity;}
+
+function calc(){
+  const tIn=num("t"), rDef = tIn>0 ? 0.5*tIn : NaN;
+  if(rAuto && isFinite(rDef)) $("r").value = rDef.toFixed(2);
+  const t=tIn, D1=num("D1"), h=num("h"), r=num("r"), f=num("f");
+  const brt=num("brt"), rt = t>0 ? r/t : NaN, epsB = (t>0&&r>=0) ? 1/(2*rt+1)*100 : NaN;
+  const bendOk = !(brt>0) || rt>=brt-1e-9;
+  $("rhint").textContent = rAuto ? "default 0.5·t applied" : "manual value";
+  $("rrec").innerHTML = isFinite(rDef) ? `<span>Default <b>r = ${rDef.toFixed(2)} mm</b> (0.5·t field standard)</span> <span class="tag ${rAuto?"":"man"}">${rAuto?"Auto":"Manual"}</span>` + (rAuto?"":`<button onclick="useRec()">Use 0.5·t</button>`) +
+    (isFinite(epsB) ? `<span style="flex-basis:100%">Bend strain at root <b>${epsB.toFixed(0)}%</b> · r/t = ${rt.toFixed(2)} <span class="tag ${bendOk?"":"man"}">${bendOk?"Within bend limit":"Below bend limit R/t "+brt.toFixed(1)}</span></span>` : "") : "Enter t to get the default radius.";
+  const sf=num("sf"), kf=num("kf"), basis=$("basis").value;
+  const lamBase=num("lamBase"), mf=num("mf");
+  const msgs=[];
+
+  if(!(t>0)||!(D1>0)||!(h>=0)||!(r>=0)){
+    $("verdict").innerHTML=""; $("res").innerHTML="";
+    $("msgs").innerHTML='<li class="e">Enter positive values for t, D1, h and r to run the calculation.</li>';
+    $("drawing").innerHTML=""; clearChart(); return;
+  }
+  const lamLim = lamBase*mf;
+  $("lamLim").value = isFinite(lamLim)? lamLim.toFixed(1) : "";
+  const lamAllow = lamLim*sf;
+  const Dm = D1 + t;
+  const Db = basis==="Dm" ? Dm : D1;
+  const d = dOf(D1,h,r,t);
+  const lamReq = lamOf(Db,d);
+  const K = d/D1;
+  const t1 = d>0 ? t*Math.sqrt(d/D1) : NaN;
+  const fmin = t + r + kf*t;
+  const dmin = Db/(1+lamAllow/100);
+  const hmax = (D1-dmin)/2 + 0.43*r + 0.215*t;
+  const Ddie = D1 + 2*t;
+  const lamNeedForH = lamReq/sf;
+
+  // verdicts
+  let vHer, vLand, vGeo;
+  if(!(lamLim>0)) vHer={s:"na",v:"No limit",m:"Enter λ base and factor"};
+  else if(d<=0) vHer={s:"ng",v:"NG",m:"Pierce hole ≤ 0 — height too large"};
+  else if(lamReq<=lamAllow) vHer={s:"ok",v:"OK",m:`${fx(lamReq,1)}% ≤ allow ${fx(lamAllow,1)}%`};
+  else if(lamReq<=lamLim) vHer={s:"warn",v:"Marginal",m:`${fx(lamReq,1)}% within limit ${fx(lamLim,1)}%, below safety margin`};
+  else vHer={s:"ng",v:"NG",m:`${fx(lamReq,1)}% > limit ${fx(lamLim,1)}% — edge crack risk`};
+
+  if(!(f>0)) vLand={s:"na",v:"Not checked",m:"Enter available f"};
+  else if(f>=fmin) vLand={s:"ok",v:"OK",m:`f ${fx(f,1)} ≥ f min ${fx(fmin,1)} mm`};
+  else if(f>=t+r) vLand={s:"warn",v:"Marginal",m:`f ${fx(f,1)} < f min ${fx(fmin,1)} mm — distortion risk`};
+  else vLand={s:"ng",v:"NG",m:`f ${fx(f,1)} < t + r ${fx(t+r,1)} mm — no flat land`};
+
+  const geoIssues=[];
+  if(!bendOk && r>=0.5*t-1e-9){geoIssues.push("w"); msgs.push(["w",`r/t = ${fx(rt,2)} is below the reference bend limit R/t ${fx(brt,1)} for this grade. Check the mill bend spec; root cracking and reduced fatigue strength are possible with high-strength steel.`]);}
+  if(h<r){geoIssues.push("e"); msgs.push(["e",`h (${fx(h,1)}) is smaller than r (${fx(r,1)}). The flange does not reach a straight wall, so the length formula is not valid. Increase h or reduce r.`]);}
+  if(r<0.5*t-1e-9){geoIssues.push("w"); msgs.push(["w",`r is below 0.5·t (${fx(0.5*t,2)} mm). Root bend strain reaches ${fx(epsB,0)}%; the sharp corner can tear the root, wear the die quickly and act as a fatigue notch.`]);}
+  if(r>4*t){geoIssues.push("w"); msgs.push(["w",`Die corner radius r is above 4·t. The straight wall becomes short and the flange may spring back into a cone shape.`]);}
+  if(d>0 && d/t<2.5){geoIssues.push("w"); msgs.push(["w",`d/t = ${fx(d/t,2)} is very small. Piercing a hole smaller than about 2.5·t is difficult and punch life is short.`]);}
+  if(d>0 && t1/t<0.6){geoIssues.push("w"); msgs.push(["w",`Edge thickness drops to ${fx(t1/t*100,0)}% of t. Check strength or tapping requirements at the flange tip.`]);}
+  vGeo = geoIssues.includes("e") ? {s:"ng",v:"Invalid",m:"See notes below"} :
+         geoIssues.length ? {s:"warn",v:"Check",m:`${geoIssues.length} note(s) below`} :
+         {s:"ok",v:"OK",m:"Radius, wall and hole proportions normal"};
+
+  if(vHer.s==="ng" && d>0 && lamLim>0) msgs.push(["i",`To pass at the allowable limit, keep h at or below ${fx(hmax,2)} mm, or use a material with λ_lim ≥ ${fx(lamNeedForH,0)}%.`]);
+  msgs.push(["i","Calculated d is a starting value. Actual height usually comes out slightly higher because of wall thinning; adjust after try-out."]);
+
+  const card=(k,o)=>`<div class="vcard s-${o.s}"><div class="k">${k}</div><div class="v">${o.v}</div><div class="m">${o.m}</div></div>`;
+  const fState = !(f>0) ? ["na","Enter available f to compare"] : f>=fmin ? ["ok",`Available f ${fx(f,1)} mm — OK`] : f>=t+r ? ["warn",`Available f ${fx(f,1)} mm — short by ${fx(fmin-f,2)} mm`] : ["ng",`Available f ${fx(f,1)} mm — below t + r`];
+  const fCol={ok:"var(--ok)",warn:"var(--warn)",ng:"var(--ng)",na:"var(--ink3)"}[fState[0]];
+  $("key").innerHTML = `<div class="kcard"><div class="k">Pierce hole Ød</div><div class="v">${d>0?fx(d,2):"–"}<small>mm</small></div><div class="m">${d>0?`Required expansion ${fx(lamReq,1)}% · K = ${fx(K,3)}`:"Height too large for this diameter"}</div></div>`+
+    `<div class="kcard"><div class="k">Minimum land width f<sub>min</sub></div><div class="v">${fx(fmin,2)}<small>mm</small></div><div class="m" style="color:${fCol}">${fState[1]}</div></div>`;
+  $("verdict").innerHTML = card("Hole expansion",vHer)+card("Land width f",vLand)+card("Geometry",vGeo);
+
+  const rows=[
+    ["Pierce hole Ød", fx(d,2), "mm", "D1 − 2h + 0.86r + 0.43t"],
+    ["Required expansion λ_req", fx(lamReq,1), "%", `(${basis==="Dm"?"D1+t":"D1"} − d) / d`],
+    ["Effective limit λ_lim", fx(lamLim,1), "%", "λ base × preparation factor"],
+    ["Allowable λ_allow", fx(lamAllow,1), "%", "λ_lim × SF"],
+    ["Usage λ_req / λ_allow", fx(lamReq/lamAllow*100,0), "%", "≤ 100 % passes"],
+    ["Flanging coefficient K", fx(K,3), "", "d / D1"],
+    ["d / t", fx(d/t,2), "", "pierceability"],
+    ["Edge thickness t1", fx(t1,2), "mm", "t · √(d / D1)"],
+    ["Straight wall length", fx(h-r,2), "mm", "h − r"],
+    ["Root bend strain", fx(epsB,0), "%", "1 / (2r/t + 1)"],
+    ["Minimum land width f_min", fx(fmin,2), "mm", "t + r + k·t"],
+    ["Max height at λ_allow", fx(hmax,2), "mm", "(D1 − d_min)/2 + 0.43r + 0.215t"],
+    ["Min pierce hole at λ_allow", fx(dmin,2), "mm", "D_basis / (1 + λ_allow)"],
+    ["Reference die opening", fx(Ddie,2), "mm", "D1 + 2t"]
+  ];
+  $("res").innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="u">${r[2]}</td><td class="f">${r[3]}</td></tr>`).join("");
+  $("msgs").innerHTML = msgs.map(m=>`<li class="${m[0]}">${m[1]}</li>`).join("");
+
+  drawSection({t,D1,h,r,f,d});
+  drawChart({t,D1,h,r,Db,lamLim,lamAllow,lamReq,hmax});
+}
+
+/* ---------- cross-section drawing ---------- */
+function drawSection(p){
+  const {t,D1,r,d}=p;
+  const hD = Math.max(p.h, r);
+  const R1=D1/2, Rc=R1+t+r;
+  const fD = Math.max(p.f>0?p.f:0, (Rc-R1)+0.3*t);
+  const Re=R1+fD;
+  const W=680, availW=W-120, availH=200;
+  const s=Math.min(availW/(2*Re), availH/(t+hD), 40);
+  const cx=W/2, top=74, y0=top+t*s;
+  const X=v=>cx+v*s, Y=v=>y0+v*s;
+  const H=Math.round(Y(hD)+58);
+  const P=(x,y)=>`${X(x).toFixed(2)},${Y(y).toFixed(2)}`;
+  function body(sg){
+    const s1=sg>0?1:0, s0=sg>0?0:1;
+    return `M${P(sg*Rc,-t)} L${P(sg*Re,-t)} L${P(sg*Re,0)} L${P(sg*Rc,0)} `+
+      `A${(r*s).toFixed(2)} ${(r*s).toFixed(2)} 0 0 ${s0} ${P(sg*(R1+t),r)} L${P(sg*(R1+t),hD)} L${P(sg*R1,hD)} L${P(sg*R1,r)} `+
+      `A${((r+t)*s).toFixed(2)} ${((r+t)*s).toFixed(2)} 0 0 ${s1} ${P(sg*Rc,-t)} Z`;
+  }
+  const flangeClip = `M${P(-Rc,-t-1)} L${P(Rc,-t-1)} L${P(Rc,hD+1)} L${P(-Rc,hD+1)} Z`;
+  const xiL=X(-R1), xiR=X(R1), xe=X(Re), yT=Y(-t), yB=Y(0), yTip=Y(hD);
+  const dim=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="dl" marker-start="url(#ar)" marker-end="url(#ar)"/>`;
+  const ext=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="el"/>`;
+  const txt=(x,y,s,a="middle",cls="dt")=>`<text x="${x}" y="${y}" text-anchor="${a}" class="${cls}">${s}</text>`;
+  let g="";
+  // body
+  g+=`<path d="${body(1)}" class="metal"/><path d="${body(-1)}" class="metal"/>`;
+  g+=`<g clip-path="url(#fc)"><path d="${body(1)}" class="fl"/><path d="${body(-1)}" class="fl"/></g>`;
+  // centerline
+  g+=`<line x1="${cx}" y1="${top-62}" x2="${cx}" y2="${yTip+44}" class="cl"/>`;
+  // pierce hole ghost + dimension
+  if(d>0){
+    const xdL=X(-d/2), xdR=X(d/2), yd=top-40;
+    g+=ext(xdL,yd-6,xdL,yT-2)+ext(xdR,yd-6,xdR,yT-2);
+    g+=dim(xdL+1,yd,xdR-1,yd)+txt(cx,yd-7,`Ød ${d.toFixed(2)}`,"middle","dt strong");
+  }
+  // f
+  const yf=top-16;
+  g+=ext(xiR,yf-6,xiR,Y(r)-3)+ext(xe,yf-6,xe,yT-3);
+  g+=dim(xiR+1,yf,xe-1,yf)+txt((xiR+xe)/2+ (d>0&&(xiR+xe)/2<X(d/2)+40?40:0),yf-6,`f ${p.f>0?p.f.toFixed(1):"–"}`,"middle","dt land");
+  // t
+  const xt=Math.min(xe+16, W-50);
+  g+=ext(xe+3,yT,xe+22,yT)+ext(xe+3,yB,xe+22,yB);
+  g+=`<line x1="${xt}" y1="${yT-14}" x2="${xt}" y2="${yT}" class="dl" marker-end="url(#ar)"/><line x1="${xt}" y1="${yB+14}" x2="${xt}" y2="${yB}" class="dl" marker-end="url(#ar)"/>`;
+  g+=txt(xt+8,(yT+yB)/2+4,`t ${t.toFixed(1)}`,"start");
+  // h (inside hole, left)
+  const xh=xiL+24;
+  g+=ext(xiL+3,yB,xh+8,yB)+ext(xiL+3,yTip,xh+8,yTip);
+  g+=dim(xh,yB+1,xh,yTip-1)+txt(xh+7,(yB+yTip)/2+4,`h ${p.h.toFixed(1)}`,"start");
+  // D1
+  const yD=yTip+24;
+  g+=ext(xiL,yTip+3,xiL,yD+6)+ext(xiR,yTip+3,xiR,yD+6);
+  g+=dim(xiL+1,yD,xiR-1,yD)+txt(cx,yD+16,`ØD1 ${D1.toFixed(1)}`);
+  // r leader
+  if(r>0){
+    const a=Math.PI/4, px=X(Rc - r*Math.cos(a)), py=Y(r - r*Math.sin(a));
+    const lx=Math.min(X(Rc)+46, W-72), ly=yB+34;
+    g+=`<circle cx="${px}" cy="${py}" r="2" class="dot"/><polyline points="${px},${py} ${lx},${ly} ${lx+60},${ly}" class="ld"/>`;
+    g+=txt(lx+2,ly-5,`R ${r.toFixed(2)}`,"start");
+  }
+  if(p.h<r) g+=txt(cx,H-6,"Drawing clamped: h < r","middle","dt warnt");
+  $("drawing").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Burring cross-section">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1.5L9 5L0 8.5Z" fill="#1F6FB2"/></marker>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#4A5863" stroke-width="0.8"/></pattern>
+    <clipPath id="fc"><path d="${flangeClip}"/></clipPath>
+  </defs>
+  <style>
+    .metal{fill:#B9C3CB;stroke:#4A5863;stroke-width:1.2}
+    .fl{fill:#E9A23B;stroke:#8A5A12;stroke-width:1.2}
+    .dl{stroke:#1F6FB2;stroke-width:1}
+    .el{stroke:#1F6FB2;stroke-width:.6;opacity:.7}
+    .cl{stroke:#55636E;stroke-width:.8;stroke-dasharray:14 3 3 3}
+    .ld{fill:none;stroke:#55636E;stroke-width:.7}
+    .dot{fill:#55636E}
+    .dt{font:13px Bahnschrift,"Segoe UI",sans-serif;fill:#1E2830}
+    .strong{font-weight:600}
+    .land{fill:#2E7D4F;font-weight:600}
+    .warnt{fill:#B3261E}
+  .linkbtn{padding:4px 10px;font-size:12px;margin:-2px 0 4px}
+dialog{border:1px solid var(--ink);border-radius:6px;padding:0;width:min(920px,96vw);max-height:90vh;color:var(--ink)}
+dialog::backdrop{background:rgba(30,40,48,.45)}
+.dhead{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:2px solid var(--ink)}
+.dhead h2{margin:0}
+.dbody{padding:12px 18px;overflow:auto;max-height:calc(90vh - 130px)}
+.dfoot{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--steel)}
+.dfoot .sp{flex:1}
+.mt td{padding:4px 4px;border-bottom:1px solid var(--line)}
+.mt th{padding:6px 4px}
+.mt input{font-size:13px;padding:5px 6px}
+.mt td.ac{white-space:nowrap}
+.mt{min-width:560px}
+.mt input[type=number]{min-width:72px}
+@media (max-width:640px){.dbody{overflow-x:auto}.dfoot button{flex:1 1 auto}.dfoot .sp{display:none}}
+.mt td.ac button{padding:3px 7px;font-size:12px;margin-left:2px}
+.mt tr.bad input.err{border-color:var(--ng);background:var(--ng-bg)}
+.dmsg{font-size:12.5px;margin-top:8px;color:var(--ink2)}
+.dmsg.e{color:var(--ng)}
+button.pri{background:var(--ink);color:#fff}
+button.pri:hover{background:#000}
+</style>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#hatch)" opacity="0"/>
+  ${g}
+</svg>`;
+}
+
+/* ---------- chart ---------- */
+function clearChart(){const c=$("chart");c.getContext("2d").clearRect(0,0,c.width,c.height);}
+function drawChart(p){
+  const c=$("chart"), dpr=window.devicePixelRatio||1, rc=c.getBoundingClientRect();
+  c.width=rc.width*dpr; c.height=rc.height*dpr;
+  const x=c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,rc.width,rc.height);
+  const L=54,R=18,T=14,B=40, w=rc.width-L-R, hh=rc.height-T-B;
+  const hMaxGeo = (p.D1 - 0.43*p.t - 0.86*p.r)/2 + 0.43*p.r + 0.215*p.t; // where d -> small
+  let hEnd = Math.max(p.h*1.6, isFinite(p.hmax)?p.hmax*1.3:0, p.r+1);
+  hEnd = Math.min(hEnd, hMaxGeo*0.97);
+  const hStart = 0;
+  if(!(hEnd>hStart)) return;
+  const pts=[]; const N=120;
+  for(let i=0;i<=N;i++){const hv=hStart+(hEnd-hStart)*i/N; const dv=dOf(p.D1,hv,p.r,p.t); pts.push([hv,lamOf(p.Db,dv)]);}
+  let yMax=Math.max(...[p.lamLim*1.3, isFinite(p.lamReq)?p.lamReq*1.2:0, 50].filter(isFinite));
+  yMax=Math.ceil(yMax/20)*20;
+  const yLo = 0;
+  const sx=v=>L+(v-hStart)/(hEnd-hStart)*w, sy=v=>T+hh-(v-yLo)/(yMax-yLo)*hh;
+  x.font='12px "Segoe UI",sans-serif'; x.fillStyle="#55636E"; x.strokeStyle="#C9D1D7"; x.lineWidth=1;
+  const yStep = (yMax-yLo)>200?50:20;
+  for(let v=yLo; v<=yMax; v+=yStep){x.beginPath();x.moveTo(L,sy(v));x.lineTo(L+w,sy(v));x.stroke();x.textAlign="right";x.fillText(v+"%",L-6,sy(v)+4);}
+  const xs=niceStep(hEnd-hStart);
+  for(let v=0; v<=hEnd+1e-9; v+=xs){x.beginPath();x.moveTo(sx(v),T);x.lineTo(sx(v),T+hh);x.stroke();x.textAlign="center";x.fillText(v.toFixed(xs<1?1:0),sx(v),T+hh+16);}
+  x.fillText("Burring height h (mm)",L+w/2,T+hh+34);
+  x.save(); x.beginPath(); x.rect(L,T,w,hh); x.clip();
+  // invalid zone h<r
+  if(p.r>0){x.fillStyle="rgba(179,38,30,.07)"; x.fillRect(sx(0),T,sx(Math.min(p.r,hEnd))-sx(0),hh);}
+  const hl=(v,col,dash,lab)=>{ if(!isFinite(v))return; x.strokeStyle=col;x.setLineDash(dash);x.lineWidth=1.4;x.beginPath();x.moveTo(L,sy(v));x.lineTo(L+w,sy(v));x.stroke();x.setLineDash([]);x.fillStyle=col;x.textAlign="left";x.fillText(lab,L+6,sy(v)-5);};
+  hl(p.lamLim,"#B3261E",[6,4],`λ_lim ${p.lamLim.toFixed(0)}%`);
+  hl(p.lamAllow,"#A86A00",[3,3],`λ_allow ${p.lamAllow.toFixed(0)}%`);
+  x.strokeStyle="#1F6FB2"; x.lineWidth=2.2; x.beginPath();
+  pts.forEach((q,i)=>{ if(!isFinite(q[1]))return; i?x.lineTo(sx(q[0]),sy(q[1])):x.moveTo(sx(q[0]),sy(q[1]));}); x.stroke();
+  if(isFinite(p.hmax)&&p.hmax>0&&p.hmax<hEnd){x.strokeStyle="#A86A00";x.setLineDash([2,3]);x.beginPath();x.moveTo(sx(p.hmax),T);x.lineTo(sx(p.hmax),T+hh);x.stroke();x.setLineDash([]);x.fillStyle="#A86A00";x.textAlign="left";x.fillText(`h_max ${p.hmax.toFixed(2)}`,sx(p.hmax)+5,T+hh-8);}
+  if(isFinite(p.lamReq)&&p.h<=hEnd){
+    const col = p.lamReq<=p.lamAllow?"#2E7D4F":p.lamReq<=p.lamLim?"#A86A00":"#B3261E";
+    x.fillStyle=col; x.beginPath(); x.arc(sx(p.h),sy(p.lamReq),6,0,Math.PI*2); x.fill();
+    x.strokeStyle="#fff"; x.lineWidth=2; x.stroke();
+    x.fillStyle="#1E2830"; x.textAlign="left"; x.font='600 12px Bahnschrift,"Segoe UI",sans-serif';
+    x.fillText(`h ${p.h.toFixed(1)} → ${p.lamReq.toFixed(1)}%`, sx(p.h)+10, sy(p.lamReq)+16);
+  }
+  x.restore();
+  x.strokeStyle="#55636E"; x.lineWidth=1; x.strokeRect(L,T,w,hh);
+  x.save(); x.translate(14,T+hh/2); x.rotate(-Math.PI/2); x.textAlign="center"; x.fillStyle="#55636E"; x.font='12px "Segoe UI",sans-serif'; x.fillText("λ_req (%)",0,0); x.restore();
+}
+function niceStep(range){const raw=range/8, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p;}
+
+window.addEventListener("resize",calc);
+applyMat(); applyMethod(); calc();
+</script>
+<dialog id="matDlg" aria-label="Material list editor">
+  <div class="dhead"><h2>Material list</h2><span class="sub" style="color:var(--ink2);font-size:12.5px">HER = hole expansion ratio for punched hole (ISO 16630). Bend limit = min. R/t for 90° bend.</span></div>
+  <div class="dbody">
+    <table class="mt">
+      <thead><tr><th style="width:52%">Grade name</th><th>HER base (%)</th><th>Bend limit R/t</th><th></th></tr></thead>
+      <tbody id="mtBody"></tbody>
+    </table>
+    <button onclick="addRow()" style="margin-top:10px">+ Add material</button>
+    <div class="dmsg" id="dmsg"></div>
+  </div>
+  <div class="dfoot">
+    <button onclick="exportMats()">Export JSON</button>
+    <button onclick="$('impFile').click()">Import JSON</button>
+    <input type="file" id="impFile" accept=".json,application/json" style="display:none" onchange="importMats(this)">
+    <button onclick="restoreBuiltin()">Restore built-in list</button>
+    <span class="sp"></span>
+    <button onclick="$('matDlg').close()">Cancel</button>
+    <button class="pri" onclick="saveEditor()">Save</button>
+  </div>
+</dialog>
+<script>
+let draft=[];
+const esc = v => String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+function openEditor(){ draft = MATERIALS.map(m=>({...m})); renderRows(); dmsg(storageOk?"":"Browser storage is not available here. Changes apply to this session only; use Export JSON to keep them.", !storageOk); $("matDlg").showModal(); }
+function renderRows(){
+  $("mtBody").innerHTML = draft.map((m,i)=>`<tr data-i="${i}">
+    <td><input data-k="n" value="${esc(m.n)}" placeholder="e.g. POSCO PDT78HB"></td>
+    <td><input data-k="l" type="number" step="1" min="1" value="${esc(m.l)}"></td>
+    <td><input data-k="br" type="number" step="0.1" min="0" value="${esc(m.br)}"></td>
+    <td class="ac"><button title="Move up" onclick="mv(${i},-1)" ${i?"":"disabled"}>▲</button><button title="Move down" onclick="mv(${i},1)" ${i<draft.length-1?"":"disabled"}>▼</button><button title="Delete" onclick="delRow(${i})">✕</button></td></tr>`).join("");
+  $("mtBody").querySelectorAll("input").forEach(el=>el.addEventListener("input",e=>{
+    const i=+e.target.closest("tr").dataset.i, k=e.target.dataset.k;
+    draft[i][k] = k==="n" ? e.target.value : parseFloat(e.target.value);
+  }));
+}
+function syncDraft(){ $("mtBody").querySelectorAll("tr").forEach(tr=>{const i=+tr.dataset.i; tr.querySelectorAll("input").forEach(el=>{const k=el.dataset.k; draft[i][k]= k==="n"?el.value:parseFloat(el.value);});}); }
+function addRow(){ syncDraft(); draft.push({n:"",l:60,br:0.5}); renderRows(); const rows=$("mtBody").querySelectorAll("tr"); rows[rows.length-1].querySelector("input").focus(); }
+function delRow(i){ syncDraft(); draft.splice(i,1); renderRows(); }
+function mv(i,dir){ syncDraft(); const j=i+dir; [draft[i],draft[j]]=[draft[j],draft[i]]; renderRows(); }
+function dmsg(t,err){ $("dmsg").textContent=t||""; $("dmsg").className="dmsg"+(err?" e":""); }
+function validate(){
+  syncDraft(); let ok=true; const names=new Set();
+  $("mtBody").querySelectorAll("tr").forEach(tr=>{
+    const m=draft[+tr.dataset.i]; tr.classList.remove("bad"); tr.querySelectorAll("input").forEach(el=>el.classList.remove("err"));
+    const bad=[]; const key=m.n.trim().toLowerCase();
+    if(!m.n.trim()||names.has(key)) bad.push("n"); names.add(key);
+    if(!(m.l>0)) bad.push("l"); if(!(m.br>=0)) bad.push("br");
+    if(bad.length){ ok=false; tr.classList.add("bad"); bad.forEach(k=>tr.querySelector(`[data-k="${k}"]`).classList.add("err")); }
+  });
+  if(!draft.length){ dmsg("Keep at least one material in the list.",true); return false; }
+  if(!ok) dmsg("Fix the highlighted cells: names must be unique and not empty, HER > 0, bend limit ≥ 0.",true);
+  return ok;
+}
+function saveEditor(){
+  if(!validate()) return;
+  const cur = MATS()[+$("mat").value]?.n;
+  MATERIALS = draft.map(m=>({n:m.n.trim(), l:m.l, br:m.br}));
+  const saved = saveMats();
+  rebuildSelect(cur); applyMat(); calc();
+  $("matDlg").close();
+  if(!saved) alert("Saved for this session only (browser storage unavailable). Use Export JSON to keep the list.");
+}
+function restoreBuiltin(){ if(confirm("Replace the list in the editor with the built-in materials? Your edits are not saved until you press Save.")){ draft=BUILTIN.map(m=>({...m})); renderRows(); dmsg("Built-in list loaded. Press Save to apply."); } }
+function exportMats(){
+  syncDraft();
+  const blob=new Blob([JSON.stringify(draft.map(m=>({n:m.n,l:m.l,br:m.br})),null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="burring_materials.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function importMats(inp){
+  const file=inp.files[0]; if(!file) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ const a=JSON.parse(rd.result); if(!Array.isArray(a)) throw 0;
+      const good=a.map(m=>({n:String(m.n??m.name??"").trim(), l:parseFloat(m.l??m.her), br:parseFloat(m.br??m.bend??0.5)})).filter(validMat);
+      if(!good.length) throw 0;
+      draft=good; renderRows(); dmsg(`Imported ${good.length} material(s)${good.length<a.length?`, skipped ${a.length-good.length} invalid row(s)`:""}. Press Save to apply.`);
+    }catch(e){ dmsg("Could not read this file. Expected a JSON array like [{\"n\":\"Grade\",\"l\":60,\"br\":0.5}].",true); }
+    inp.value=""; };
+  rd.readAsText(file);
+}
+</script>
+<script>
+/* Offline PWA support (generated by the offline-pwa-github-pages skill).
+   Registers ./sw.js, shows a small status dot (green = usable offline, orange = still saving or reopen the app,
+   red = not saved) and a diagnostics panel with a "reset and re-download" button.
+   Public API for custom UI: window.OFFLINE_PWA = { supported, level, getState(), check(), reset(opts) }. */
+var APP_CACHE = 'burr-v1.5';   // must be the same name as CACHE in sw.js
+(function () {
+  var SHOW_BADGE = true;
+  var PREFIX = 'burr-';
+  var M = ({
+  "ko": {
+    "ready": "오프라인 사용 준비 완료 (이제 인터넷 없이도 실행됩니다)",
+    "preparing": "오프라인용으로 저장 중… 완료 알림이 뜰 때까지 인터넷 연결을 유지하세요",
+    "failed": "오프라인 저장에 실패했습니다. 왼쪽 아래 점을 눌러 원인을 확인하세요",
+    "newVersion": "새 버전이 준비되었습니다. 앱을 완전히 닫았다가 다시 열면 적용됩니다.",
+    "app": "오프라인 상태", "yes": "예", "no": "아니오", "none": "없음",
+    "registered": "서비스워커 등록", "state": "상태", "controlled": "현재 화면 제어",
+    "regErr": "등록 오류", "installErr": "설치 오류(서비스워커 보고)", "healErr": "저장 재시도 오류",
+    "myCache": "이 앱 저장소", "otherCaches": "같은 주소의 다른 저장소", "files": "저장된 파일", "cacheErr": "저장소 조회 오류",
+    "storage": "저장 공간(사용/허용)",
+    "verdictGreen": "=> 오프라인 사용 가능",
+    "verdictYellow": "=> 저장은 됐지만 아직 이 화면을 제어하지 않음. 앱을 완전히 닫았다가 다시 여세요",
+    "verdictRed": "=> 오프라인 저장이 안 되어 있음. 인터넷이 되는 곳에서 '저장 초기화 후 다시 받기'를 누르세요",
+    "btnReset": "저장 초기화 후 다시 받기", "btnCopy": "복사", "btnClose": "닫기",
+    "confirmReset": "저장된 앱 파일을 지우고 다시 받습니다. 인터넷이 연결되어 있어야 합니다. 입력한 데이터는 지워지지 않습니다. 계속할까요?"
+  },
+  "en": {
+    "ready": "Ready for offline use (works without internet now)",
+    "preparing": "Saving for offline use… stay connected until the ready message appears",
+    "failed": "Offline save failed. Tap the dot at the bottom left to see why",
+    "newVersion": "A new version is ready. Close the app completely and reopen it to apply.",
+    "app": "Offline status", "yes": "yes", "no": "no", "none": "none",
+    "registered": "Service worker registered", "state": "State", "controlled": "Controls this page",
+    "regErr": "Registration error", "installErr": "Install error (from worker)", "healErr": "Re-save error",
+    "myCache": "This app's cache", "otherCaches": "Other caches on this address", "files": "Saved files", "cacheErr": "Cache error",
+    "storage": "Storage (used/quota)",
+    "verdictGreen": "=> Usable offline",
+    "verdictYellow": "=> Saved, but not controlling this page yet. Close the app completely and reopen it",
+    "verdictRed": "=> Not saved for offline use. Connect to the internet and press 'Reset and re-download'",
+    "btnReset": "Reset and re-download", "btnCopy": "Copy", "btnClose": "Close",
+    "confirmReset": "This deletes the saved app files and downloads them again. Internet is required. Your data is not deleted. Continue?"
+  }
+})['en'];
+  var host = location.hostname;
+  var secure = location.protocol === 'https:' || host === 'localhost' || host === '127.0.0.1';
+  var native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  var API = window.OFFLINE_PWA = { supported: false, level: 'gray', text: '' };
+  if (!('serviceWorker' in navigator) || !secure || native) return;   // local file / APK: already self-contained
+  API.supported = true;
+  var registerError = '', installError = '', healError = '';
+  var firstInstall = !navigator.serviceWorker.controller;
+  var dot, toast, panel, pre;
+
+  var COLORS = { green: '#2e9d6b', yellow: '#e0a030', red: '#d9534f', gray: '#9aa3a0' };
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function say(msg, ms) {
+    if (!toast) return;
+    toast.textContent = msg; toast.style.display = 'block';
+    clearTimeout(toast._t); toast._t = setTimeout(function () { toast.style.display = 'none'; }, ms || 8000);
+  }
+  function setLevel(level) {
+    API.level = level;
+    if (dot) { dot.style.background = COLORS[level] || COLORS.gray; dot.title = M[level === 'green' ? 'ready' : level === 'yellow' ? 'preparing' : 'failed']; }
+  }
+  async function hasIndex() {
+    try {
+      if (!(await caches.has(APP_CACHE))) return false;
+      var c = await caches.open(APP_CACHE);
+      return !!(await c.match('./index.html'));
+    } catch (e) { return false; }
+  }
+  async function diagnose() {
+    var L = [], level = 'red';
+    L.push(M.app + ' ' + APP_CACHE + ' | ' + location.href);
+    var reg = null;
+    try { reg = await navigator.serviceWorker.getRegistration(); } catch (e) { L.push(M.regErr + ': ' + e.message); }
+    L.push(M.registered + ': ' + (reg ? M.yes : M.no));
+    if (reg) {
+      var w = reg.active ? 'active' : (reg.waiting ? 'waiting' : (reg.installing ? 'installing' : '-'));
+      L.push(M.state + ': ' + w + ' / ' + M.controlled + ': ' + (navigator.serviceWorker.controller ? M.yes : M.no));
+    }
+    if (registerError) L.push(M.regErr + ': ' + registerError);
+    if (installError) L.push(M.installErr + ': ' + installError);
+    if (healError) L.push(M.healErr + ': ' + healError);
+    var has = false;
+    try {
+      var names = await caches.keys();
+      L.push(M.myCache + ': ' + (names.indexOf(APP_CACHE) >= 0 ? APP_CACHE : '(' + M.none + ')'));
+      var others = names.filter(function (n) { return n !== APP_CACHE; });
+      if (others.length) L.push(M.otherCaches + ': ' + others.join(', '));
+      if (names.indexOf(APP_CACHE) >= 0) {
+        var c = await caches.open(APP_CACHE), keys = await c.keys();
+        keys.forEach(function (r) { if (/index\.html$|\/$/.test(new URL(r.url).pathname)) has = true; });
+        L.push(M.files + ' ' + keys.length + ': ' + keys.map(function (r) { return new URL(r.url).pathname.split('/').pop() || '(index)'; }).join(', '));
+      }
+    } catch (e) { L.push(M.cacheErr + ': ' + e.message); }
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        var est = await navigator.storage.estimate();
+        L.push(M.storage + ': ' + Math.round((est.usage || 0) / 1048576) + 'MB / ' + Math.round((est.quota || 0) / 1048576) + 'MB');
+      }
+    } catch (e) {}
+    if (has && navigator.serviceWorker.controller) level = 'green'; else if (has) level = 'yellow';
+    L.push(level === 'green' ? M.verdictGreen : level === 'yellow' ? M.verdictYellow : M.verdictRed);
+    return { text: L.join('\n'), level: level };
+  }
+  // Only this app's worker and caches (never other apps on the same address, never localStorage/IndexedDB data).
+  async function reset(opts) {
+    try {
+      var reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.unregister();
+      var names = await caches.keys();
+      for (var j = 0; j < names.length; j++) if (names[j].indexOf(PREFIX) === 0) await caches.delete(names[j]);
+    } catch (e) {}
+    if (!opts || opts.reload !== false) location.reload();
+  }
+  // Worker active but cache empty -> no new install happens, so the page fetches the body again itself.
+  async function heal() {
+    try {
+      var reg = await navigator.serviceWorker.getRegistration();
+      if (!reg || !reg.active || reg.installing || reg.waiting) return;
+      var c = await caches.open(APP_CACHE);
+      await c.add(new Request('./index.html', { cache: 'reload' }));
+    } catch (e) { healError = (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : String(e)); }
+  }
+  async function refreshLevel() { if (await hasIndex()) setLevel(navigator.serviceWorker.controller ? 'green' : 'yellow'); }
+  async function watch() {
+    var already = await hasIndex();
+    if (already) await refreshLevel(); else { setLevel('yellow'); say(M.preparing, 8000); }
+    for (var i = 0; i < 120; i++) {
+      if (await hasIndex()) { await refreshLevel(); if (!already && firstInstall) say(M.ready, 8000); return; }
+      if (registerError || installError) break;
+      if (i === 6) await heal();
+      await sleep(1000);
+    }
+    setLevel('red'); say(M.failed, 12000);
+  }
+  async function check() {
+    var out = await diagnose();
+    API.text = out.text; setLevel(out.level);
+    if (pre) { pre.textContent = out.text; panel.style.display = 'flex'; }
+    return out;
+  }
+  API.getState = function () { return { level: API.level, text: API.text }; };
+  API.check = check; API.reset = reset;
+
+  function build() {
+    toast = document.createElement('div');
+    toast.style.cssText = 'display:none;position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(20,25,35,.93);color:#fff;padding:9px 16px;border-radius:8px;font:13px/1.4 sans-serif;z-index:2147483000;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.35)';
+    document.body.appendChild(toast);
+    if (!SHOW_BADGE) return;
+    dot = document.createElement('div');
+    dot.style.cssText = 'position:fixed;left:6px;bottom:6px;width:12px;height:12px;border-radius:50%;background:' + COLORS.gray + ';border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 7px rgba(0,0,0,.001),0 1px 4px rgba(0,0,0,.4);opacity:.75;z-index:2147482000;cursor:pointer';
+    dot.addEventListener('click', check);
+    document.body.appendChild(dot);
+    panel = document.createElement('div');
+    panel.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483100;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:12px';
+    panel.innerHTML = '<div style="background:#fff;color:#1a1f2b;border-radius:10px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;padding:12px;font-family:sans-serif"><pre style="overflow:auto;margin:0 0 10px;flex:1;font:11.5px/1.45 monospace;white-space:pre-wrap;word-break:break-all"></pre><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"></div></div>';
+    pre = panel.querySelector('pre');
+    var row = panel.querySelector('div > div:last-child');
+    function btn(label, fn) { var b = document.createElement('button'); b.textContent = label; b.style.cssText = 'padding:8px 16px;border-radius:6px;border:1px solid #ccd;background:#f3f4f6;font-size:13px;cursor:pointer'; b.addEventListener('click', fn); row.appendChild(b); }
+    btn(M.btnReset, function () { if (confirm(M.confirmReset)) reset(); });
+    btn(M.btnCopy, function () { try { navigator.clipboard.writeText(pre.textContent); } catch (e) {} });
+    btn(M.btnClose, function () { panel.style.display = 'none'; });
+    document.body.appendChild(panel);
+  }
+  function start() {
+    build();
+    navigator.serviceWorker.addEventListener('message', function (ev) { if (ev.data && ev.data.type === 'sw-install-error') installError = ev.data.msg; });
+    navigator.serviceWorker.addEventListener('controllerchange', refreshLevel);
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      reg.addEventListener('updatefound', function () {
+        var nw = reg.installing; if (!nw) return;
+        nw.addEventListener('statechange', function () { if (nw.state === 'installed' && navigator.serviceWorker.controller) say(M.newVersion, 10000); });
+      });
+    }).catch(function (err) { registerError = (err && err.name ? err.name + ': ' : '') + (err && err.message ? err.message : String(err)); });
+    watch();
+    if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function () {}); }
+  }
+  if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
+})();
+</script>
+</body>
+</html>
